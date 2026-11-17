@@ -1,4 +1,3 @@
-
 CC = gcc
 NASM = nasm
 LD = ld
@@ -10,13 +9,24 @@ LIMINE_DIR = /usr/share/limine
 CFLAGS = -std=gnu11 -O2 -Wall -Wextra \
          -ffreestanding -fno-stack-protector \
          -fno-pic -fno-pie -m64 \
+         -mcmodel=kernel \
          -mno-red-zone -mgeneral-regs-only \
          -fno-asynchronous-unwind-tables \
-         -fno-unwind-tables
+         -fno-unwind-tables -fno-builtin \
+         -Iinclude \
+         -Idrivers \
+         -Ivendor/limine-protocol/include
 
 LDFLAGS = -m elf_x86_64 -nostdlib \
           -z max-page-size=0x1000 \
           -T linker.ld
+
+OBJECTS = \
+    $(BUILD)/entry.o \
+    $(BUILD)/kernel.o \
+    $(BUILD)/boot.o \
+    $(BUILD)/log.o \
+    $(BUILD)/serial.o
 
 .PHONY: all iso clean
 
@@ -31,8 +41,17 @@ $(BUILD)/entry.o: arch/x86_64/boot/entry.asm | $(BUILD)
 $(BUILD)/kernel.o: kernel/kernel.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/nynOS.elf: $(BUILD)/entry.o $(BUILD)/kernel.o linker.ld
-	$(LD) $(LDFLAGS) -o $@ $(BUILD)/entry.o $(BUILD)/kernel.o
+$(BUILD)/boot.o: kernel/boot.c | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/log.o: kernel/log.c | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/serial.o: drivers/serial/serial.c | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/nynOS.elf: $(OBJECTS) linker.ld
+	$(LD) $(LDFLAGS) -o $@ $(OBJECTS)
 
 iso: $(BUILD)/nynOS.elf
 	mkdir -p $(ISO_ROOT)/EFI/BOOT
@@ -58,6 +77,6 @@ iso: $(BUILD)/nynOS.elf
 	limine bios-install $(BUILD)/nynOS.iso
 
 clean:
-	rm -f $(BUILD)/entry.o $(BUILD)/kernel.o
+	rm -f $(OBJECTS)
 	rm -f $(BUILD)/nynOS.elf $(BUILD)/nynOS.iso
 	rm -rf $(ISO_ROOT)
