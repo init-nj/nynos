@@ -296,3 +296,18 @@ void boot_info_init(void)
 
     log_write("\n[KINIT] Initialization sequence completed.\n");
 }
+
+struct limine_framebuffer *boot_get_framebuffer(void)
+{
+    struct limine_framebuffer_response *response =
+        framebuffer_request.response;
+
+    if (response == 0 ||
+        response->framebuffers == 0 ||
+        response->framebuffer_count == 0)
+    {
+        return 0;
+    }
+
+    return response->framebuffers[0];
+}

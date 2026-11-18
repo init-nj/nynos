@@ -26,7 +26,8 @@ OBJECTS = \
     $(BUILD)/kernel.o \
     $(BUILD)/boot.o \
     $(BUILD)/log.o \
-    $(BUILD)/serial.o
+    $(BUILD)/serial.o \
+    $(BUILD)/framebuffer.o \
 
 .PHONY: all iso clean
 
@@ -52,6 +53,9 @@ $(BUILD)/serial.o: drivers/serial/serial.c | $(BUILD)
 
 $(BUILD)/nynOS.elf: $(OBJECTS) linker.ld
 	$(LD) $(LDFLAGS) -o $@ $(OBJECTS)
+
+$(BUILD)/framebuffer.o: drivers/framebuffer/framebuffer.c | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 iso: $(BUILD)/nynOS.elf
 	mkdir -p $(ISO_ROOT)/EFI/BOOT
