@@ -15,6 +15,7 @@ CFLAGS = -std=gnu11 -O2 -Wall -Wextra \
          -fno-unwind-tables -fno-builtin \
          -Iinclude \
          -Idrivers \
+	 -Ilib \
          -Ivendor/limine-protocol/include
 
 LDFLAGS = -m elf_x86_64 -nostdlib \
@@ -28,6 +29,8 @@ OBJECTS = \
     $(BUILD)/log.o \
     $(BUILD)/serial.o \
     $(BUILD)/framebuffer.o \
+    $(BUILD)/font.o \
+    $(BUILD)/text.o
 
 .PHONY: all iso clean
 
@@ -55,6 +58,12 @@ $(BUILD)/nynOS.elf: $(OBJECTS) linker.ld
 	$(LD) $(LDFLAGS) -o $@ $(OBJECTS)
 
 $(BUILD)/framebuffer.o: drivers/framebuffer/framebuffer.c | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/font.o: lib/graphics/font.c | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/text.o: lib/graphics/text.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 iso: $(BUILD)/nynOS.elf
